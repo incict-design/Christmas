@@ -91,13 +91,7 @@
         <audio id="player" controls></audio>
     </div>
 
-    <!-- アップロードエリア -->
-    <div class="upload-area">
-        <label for="fileInput">アップロード（mp3/m4a）:</label><br>
-        <input type="file" id="fileInput" class="fileInput" accept=".mp3,.m4a"><br>
-        <div class="uploaded-list" id="uploadedList"></div>
-    </div>
-</div>
+   
 
 <script>
 const player = document.getElementById('player');
@@ -131,84 +125,6 @@ function playSound(filename) {
 }
 
 
-
-// ファイルアップロード
-fileInput.addEventListener('change', function() {
-    const file = this.files[0];
-    if(file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const data = e.target.result;
-            const transaction = db.transaction(['files'], 'readwrite');
-            const store = transaction.objectStore('files');
-            store.add({ name: file.name, data: data });
-            transaction.oncomplete = function() {
-                loadFiles();
-            };
-        };
-        reader.readAsDataURL(file);
-    }
-});
-
-// 保存ファイル一覧表示
-function loadFiles() {
-    uploadedList.innerHTML = '';
-    const transaction = db.transaction(['files'], 'readonly');
-    const store = transaction.objectStore('files');
-    const request = store.openCursor();
-
-    request.onsuccess = function(event) {
-        const cursor = event.target.result;
-        if(cursor) {
-            const item = cursor.value;
-
-            const div = document.createElement('div');
-            div.className = 'file-item';
-
-            const nameSpan = document.createElement('span');
-            nameSpan.className = 'file-name';
-            nameSpan.textContent = item.name;
-
-            const buttonsDiv = document.createElement('div');
-            buttonsDiv.className = 'file-buttons';
-            buttonsDiv.innerHTML = `
-                <button onclick="playFile(${item.id})">再生</button>
-                <button onclick="deleteFile(${item.id})" class="stop">削除</button>
-            `;
-
-            div.appendChild(nameSpan);
-            div.appendChild(buttonsDiv);
-            uploadedList.appendChild(div);
-
-            cursor.continue();
-        }
-    };
-}
-
-// 保存ファイル再生
-function playFile(id) {
-    const transaction = db.transaction(['files'], 'readonly');
-    const store = transaction.objectStore('files');
-    const request = store.get(id);
-
-    request.onsuccess = function() {
-        const file = request.result;
-        if(file) {
-            player.src = file.data;
-            player.play();
-        }
-    };
-}
-
-// 保存ファイル削除
-function deleteFile(id) {
-    const transaction = db.transaction(['files'], 'readwrite');
-    const store = transaction.objectStore('files');
-    store.delete(id);
-    transaction.oncomplete = function() {
-        loadFiles();
-    };
-}
 </script>
 
 </body>
